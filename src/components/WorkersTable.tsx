@@ -73,7 +73,7 @@ export default function WorkersTable({ workers, onWorkerClick }: WorkersTablePro
           return 0;
         };
         aVal = parseTime(aVal);
-        bVal = parseTime(bVal);
+        bVal = parseTime(bVal as string);
       }
 
       if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
@@ -99,7 +99,7 @@ export default function WorkersTable({ workers, onWorkerClick }: WorkersTablePro
   // Animate progress bars after render
   useEffect(() => {
     setTimeout(() => {
-      document.querySelectorAll('.worker-util-bar').forEach(el => {
+      document.querySelectorAll<HTMLElement>('.worker-util-bar').forEach(el => {
         el.style.width = el.dataset.target + '%';
       });
     }, 150);
@@ -166,7 +166,7 @@ export default function WorkersTable({ workers, onWorkerClick }: WorkersTablePro
           <tbody id="workers-tbody">
             {sortedWorkers.length === 0 ? (
               <tr>
-                <td colSpan="8">
+                <td colSpan={8}>
                   <div className="empty-state">
                     <i className="bi bi-person-slash"></i>
                     <p>No workers found</p>

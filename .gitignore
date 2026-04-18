@@ -24,4 +24,4 @@ dist-ssr
 *.sw?
 
 #exclude claude
-.claude
+.claude/

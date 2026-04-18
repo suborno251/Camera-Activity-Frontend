@@ -80,7 +80,7 @@ export default function DetailModal({ isOpen, onClose, data, type }: DetailModal
               </div>
               <div>
                 <div className="name-text" style={{ fontSize: '17px' }}>
-                  {'name' in data ? data.name : data.name}
+                  {data.name}
                 </div>
                 <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
                   {type === 'worker' ? 'Worker Detail View' : `${(data as Workstation).type} Station`}

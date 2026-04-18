@@ -60,7 +60,7 @@ export default function WorkstationsTable({ workstations, onStationClick }: Work
           return 0;
         };
         aVal = parseTime(aVal);
-        bVal = parseTime(bVal);
+        bVal = parseTime(bVal as string );
       }
 
       if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
@@ -81,7 +81,7 @@ export default function WorkstationsTable({ workstations, onStationClick }: Work
   // Animate progress bars after render
   useEffect(() => {
     setTimeout(() => {
-      document.querySelectorAll('.station-util-bar').forEach(el => {
+      document.querySelectorAll<HTMLElement>('.station-util-bar').forEach(el => {
         el.style.width = el.dataset.target + '%';
       });
     }, 150);
@@ -134,7 +134,7 @@ export default function WorkstationsTable({ workstations, onStationClick }: Work
           <tbody id="stations-tbody">
             {sortedStations.length === 0 ? (
               <tr>
-                <td colSpan="7">
+                <td colSpan={7}>
                   <div className="empty-state">
                     <i className="bi bi-grid-slash"></i>
                     <p>No stations found</p>

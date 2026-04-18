@@ -6,20 +6,21 @@ import WorkersTable from './components/WorkersTable'
 import WorkstationsTable from './components/WorkstationsTable'
 import DetailModal from './components/DetailModal'
 import { useMetrics } from './hooks/useMetrics'
+import type { FactoryWorker, Workstation } from './types'
 
 function App() {
   const { factoryMetrics, workers, workstations, loading, error } = useMetrics()
   const [modalState, setModalState] = useState<{
     isOpen: boolean
     type: 'worker' | 'station' | null
-    data: any
+    data: FactoryWorker | Workstation | null
   }>({
     isOpen: false,
     type: null,
     data: null,
   })
 
-  const handleWorkerClick = (worker: any) => {
+  const handleWorkerClick = (worker: FactoryWorker) => {
     setModalState({
       isOpen: true,
       type: 'worker',
@@ -27,7 +28,7 @@ function App() {
     })
   }
 
-  const handleStationClick = (station: any) => {
+  const handleStationClick = (station: Workstation) => {
     setModalState({
       isOpen: true,
       type: 'station',
