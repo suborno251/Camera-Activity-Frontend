@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FactoryIQ — Productivity Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+
+  <style>
+    :root {
+      --bg-base:        #0d0f12;
+      --bg-panel:       #13161b;
+      --bg-card:        #1a1e25;
+      --bg-hover:       #1f2530;
+      --border:         #262c38;
+      --border-light:   #2e3545;
+      --amber:          #f5a623;
+      --amber-dim:      #c4831a;
+      --amber-glow:     rgba(245,166,35,0.12);
+      --green:          #3dd68c;
+      --green-dim:      rgba(61,214,140,0.15);
+      --red:            #f55a5a;
+      --red-dim:        rgba(245,90,90,0.15);
+      --blue:           #5b9cf6;
+      --blue-dim:       rgba(91,156,246,0.15);
+      --text-primary:   #e8ecf2;
+      --text-secondary: #7a8799;
+      --text-muted:     #4a5568;
+      --mono:           'Share Tech Mono', monospace;
+      --sans:           'Barlow', sans-serif;
+      --condensed:      'Barlow Condensed', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--sans);
+      font-size: 14px;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Scanline texture overlay ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.03) 2px,
+        rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--amber);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: #000;
+    }
+
+    .brand-name {
+      font-family: var(--condensed);
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--text-primary);
+      text-transform: uppercase;
+    }
+
+    .brand-name span { color: var(--amber); }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--green);
+      letter-spacing: 1px;
+    }
+
+    .live-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    .topbar-time {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* ── LAYOUT ── */
+    .main-wrap {
+      padding: 24px;
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    /* ── SECTION HEADER ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .section-label {
+      font-family: var(--condensed);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .section-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── SUMMARY CARDS ── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    @media (max-width: 992px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 576px) { .summary-grid { grid-template-columns: 1fr; } }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .stat-card:hover {
+      border-color: var(--border-light);
+      transform: translateY(-2px);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+    }
+
+    .stat-card.amber::before { background: var(--amber); }
+    .stat-card.green::before { background: var(--green); }
+    .stat-card.blue::before  { background: var(--blue); }
+    .stat-card.red::before   { background: var(--red); }
+
+    .stat-icon {
+      width: 36px; height: 36px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      margin-bottom: 14px;
+    }
+
+    .stat-card.amber .stat-icon { background: var(--amber-glow); color: var(--amber); }
+    .stat-card.green .stat-icon { background: var(--green-dim);  color: var(--green); }
+    .stat-card.blue  .stat-icon { background: var(--blue-dim);   color: var(--blue); }
+    .stat-card.red   .stat-icon { background: var(--red-dim);    color: var(--red); }
+
+    .stat-value {
+      font-family: var(--mono);
+      font-size: 28px;
+      color: var(--text-primary);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .stat-sub {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 10px;
+    }
+
+    /* ── UTILIZATION BARS ── */
+    .util-bar-wrap {
+      margin-top: 10px;
+    }
+
+    .util-bar-track {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .util-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 1.2s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ── PANEL ── */
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 24px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .panel-head {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .panel-title {
+      font-family: var(--condensed);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title i { color: var(--amber); font-size: 14px; }
+
+    /* ── SEARCH / FILTER ── */
+    .filter-wrap {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .filter-input {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-family: var(--sans);
+      font-size: 13px;
+      padding: 6px 12px 6px 30px;
+      width: 200px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .filter-input::placeholder { color: var(--text-muted); }
+    .filter-input:focus { border-color: var(--amber-dim); }
+
+    .filter-wrap-inner {
+      position: relative;
+    }
+
+    .filter-wrap-inner i {
+      position: absolute;
+      left: 9px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .badge-count {
+      background: var(--amber-glow);
+      color: var(--amber);
+      border: 1px solid rgba(245,166,35,0.3);
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    /* ── TABLE ── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-family: var(--condensed);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .data-table thead th:hover { color: var(--text-secondary); }
+    .data-table thead th .sort-icon { color: var(--text-muted); margin-left: 4px; font-size: 10px; }
+
+    .data-table tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .data-table tbody tr:hover { background: var(--bg-hover); }
+    .data-table tbody tr:last-child { border-bottom: none; }
+
+    .data-table td {
+      padding: 12px 16px;
+      color: var(--text-secondary);
+      vertical-align: middle;
+    }
+
+    .data-table td.mono { font-family: var(--mono); font-size: 13px; }
+
+    /* ── WORKER / STATION CHIP ── */
+    .id-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+
+    .worker-name-wrap {
+      display: flex;
+      align-items: center;
+    }
+
+    .name-text {
+      font-weight: 500;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    /* ── STATUS BADGES ── */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .status-badge.working { background: var(--green-dim); color: var(--green); }
+    .status-badge.idle    { background: var(--amber-glow); color: var(--amber); }
+    .status-badge.absent  { background: var(--red-dim);   color: var(--red); }
+
+    .status-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+    /* ── MINI PROGRESS ── */
+    .mini-progress {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mini-bar-track {
+      flex: 1;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .mini-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 1.2s cubic-bezier(.4,0,.2,1);
+    }
+
+    .mini-bar-pct {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-primary);
+      width: 38px;
+      text-align: right;
+    }
+
+    /* ── WORKER COLORS ── */
+    .w-color-0 { background: rgba(245,166,35,0.2);  color: #f5a623; }
+    .w-color-1 { background: rgba(91,156,246,0.2);  color: #5b9cf6; }
+    .w-color-2 { background: rgba(61,214,140,0.2);  color: #3dd68c; }
+    .w-color-3 { background: rgba(200,100,246,0.2); color: #c864f6; }
+    .w-color-4 { background: rgba(246,130,91,0.2);  color: #f6825b; }
+    .w-color-5 { background: rgba(246,91,156,0.2);  color: #f65b9c; }
+
+    /* ── DETAIL MODAL ── */
+    .detail-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 9998;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .detail-modal-overlay.open { display: flex; }
+
+    .detail-modal {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      padding: 28px;
+      width: 480px;
+      max-width: 95vw;
+      animation: modalIn 0.25s ease;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.96) translateY(8px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .modal-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .modal-close-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      width: 30px; height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .modal-close-btn:hover { background: var(--red-dim); color: var(--red); }
+
+    .modal-stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .modal-stat {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .modal-stat-val {
+      font-family: var(--mono);
+      font-size: 22px;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .modal-stat-lbl {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+
+    .empty-state i { font-size: 32px; margin-bottom: 10px; display: block; }
+    .empty-state p { font-size: 13px; }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-base); }
+    ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════ TOPBAR ════════════════════ -->
+<header class="topbar">
+  <div class="topbar-brand">
+    <div class="brand-icon"><i class="bi bi-camera-video-fill"></i></div>
+    <div class="brand-name">Factory<span>IQ</span></div>
+  </div>
+  <div class="topbar-right">
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      LIVE
+    </div>
+    <div class="topbar-time" id="clock">--:--:--</div>
+  </div>
+</header>
+
+<!-- ════════════════════ MAIN ════════════════════ -->
+<div class="main-wrap">
+
+  <!-- ── FACTORY SUMMARY ── -->
+  <div class="section-header mb-3">
+    <span class="section-label">Factory Overview</span>
+    <div class="section-line"></div>
+    <span class="section-label" id="shift-label">Shift A</span>
+  </div>
+
+  <div class="summary-grid" id="summary-grid">
+    <!-- Populated by JS -->
+  </div>
+
+  <!-- ── WORKERS TABLE ── -->
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">
+        <i class="bi bi-people-fill"></i>
+        Workers
+        <span class="badge-count" id="worker-count">6</span>
+      </div>
+      <div class="filter-wrap">
+        <div class="filter-wrap-inner">
+          <i class="bi bi-search"></i>
+          <input class="filter-input" type="text" id="worker-search" placeholder="Search worker..."/>
+        </div>
+        <select class="filter-input" style="width:130px; padding-left:10px;" id="worker-status-filter">
+          <option value="">All Status</option>
+          <option value="working">Working</option>
+          <option value="idle">Idle</option>
+          <option value="absent">Absent</option>
+        </select>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="data-table" id="workers-table">
+        <thead>
+          <tr>
+            <th>Worker <i class="bi bi-chevron-expand sort-icon"></i></th>
+            <th>Status</th>
+            <th>Active Time <i class="bi bi-chevron-expand sort-icon"></i></th>
+            <th>Idle Time <i class="bi bi-chevron-expand sort-icon"></i></th>
+            <th>Utilization <i class="bi bi-chevron-expand sort-icon"></i></th>
+            <th>Units Produced <i class="bi bi-chevron-expand sort-icon"></i></th>
+            <th>Units / Hr <i class="bi bi-chevron-expand sort-icon"></i></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="workers-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── WORKSTATIONS TABLE ── -->
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">
+        <i class="bi bi-grid-3x2-gap-fill"></i>
+        Workstations
+        <span class="badge-count" id="station-count">6</span>
+      </div>
+      <div class="filter-wrap">
+        <div class="filter-wrap-inner">
+          <i class="bi bi-search"></i>
+          <input class="filter-input" type="text" id="station-search" placeholder="Search station..."/>
+        </div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="data-table" id="stations-table">
+        <thead>
+          <tr>
+            <th>Station <i class="bi bi-chevron-expand sort-icon"></i></th>
+            <th>Type</th>
+            <th>Occupancy Time <i class="bi bi-chevron-expand sort-icon"></i></th>
+            <th>Utilization <i class="bi bi-chevron-expand sort-icon"></i></th>
+            <th>Units Produced <i class="bi bi-chevron-expand sort-icon"></i></th>
+            <th>Throughput / Hr <i class="bi bi-chevron-expand sort-icon"></i></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="stations-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /main-wrap -->
+
+<!-- ════════════════════ DETAIL MODAL ════════════════════ -->
+<div class="detail-modal-overlay" id="modal-overlay">
+  <div class="detail-modal" id="modal-box">
+    <div class="modal-top">
+      <div id="modal-header"></div>
+      <button class="modal-close-btn" onclick="closeModal()"><i class="bi bi-x"></i></button>
+    </div>
+    <div class="modal-stat-grid" id="modal-stats"></div>
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+
+// ════════════════════════════════════════════
+//  MOCK DATA — Replace with API calls later
+// ════════════════════════════════════════════
+
+const factoryMetrics = {
+  totalProductiveTime: "38h 20m",
+  totalProductionCount: 1284,
+  avgProductionRate: "33.8 units/hr",
+  avgUtilization: 76.4,
+};
+
+const workers = [
+  { id: "W1", name: "Carlos Mendez",  status: "working", activeTime: "6h 45m", idleTime: "1h 15m", utilization: 84, units: 223, unitsPerHr: 33.1 },
+  { id: "W2", name: "Anika Sharma",   status: "working", activeTime: "7h 10m", idleTime: "0h 50m", utilization: 89, units: 248, unitsPerHr: 34.6 },
+  { id: "W3", name: "James Okafor",   status: "idle",    activeTime: "5h 30m", idleTime: "2h 30m", utilization: 68, units: 187, unitsPerHr: 34.0 },
+  { id: "W4", name: "Mei-Lin Zhang",  status: "working", activeTime: "6h 55m", idleTime: "1h 05m", utilization: 86, units: 231, unitsPerHr: 33.4 },
+  { id: "W5", name: "Dmitri Volkov",  status: "absent",  activeTime: "3h 00m", idleTime: "0h 30m", utilization: 42, units:  98, unitsPerHr: 32.7 },
+  { id: "W6", name: "Fatima Al-Nour", status: "idle",    activeTime: "5h 50m", idleTime: "2h 10m", utilization: 72, units: 297, unitsPerHr: 50.9 },
+];
+
+const workstations = [
+  { id: "S1", name: "Station Alpha",   type: "Assembly",   occupancy: "6h 40m", utilization: 83, units: 218, throughput: 32.7 },
+  { id: "S2", name: "Station Beta",    type: "Packaging",  occupancy: "7h 00m", utilization: 87, units: 241, throughput: 34.4 },
+  { id: "S3", name: "Station Gamma",   type: "Assembly",   occupancy: "5h 20m", utilization: 66, units: 178, throughput: 33.4 },
+  { id: "S4", name: "Station Delta",   type: "QA",         occupancy: "6h 50m", utilization: 85, units: 226, throughput: 33.1 },
+  { id: "S5", name: "Station Epsilon", type: "Welding",    occupancy: "3h 10m", utilization: 39, units: 101, throughput: 31.9 },
+  { id: "S6", name: "Station Zeta",    type: "Packaging",  occupancy: "5h 45m", utilization: 71, units: 320, throughput: 55.7 },
+];
+
+// ════════════════════════════════════════════
+//  RENDER SUMMARY CARDS
+// ════════════════════════════════════════════
+
+function renderSummary() {
+  const cards = [
+    {
+      color: "amber",
+      icon: "bi-clock-history",
+      value: factoryMetrics.totalProductiveTime,
+      label: "Total Productive Time",
+      sub: "Across all 6 workers",
+    },
+    {
+      color: "green",
+      icon: "bi-box-seam",
+      value: factoryMetrics.totalProductionCount.toLocaleString(),
+      label: "Total Units Produced",
+      sub: `Avg rate: ${factoryMetrics.avgProductionRate}`,
+    },
+    {
+      color: "blue",
+      icon: "bi-bar-chart-fill",
+      value: factoryMetrics.avgUtilization + "%",
+      label: "Avg Worker Utilization",
+      sub: null,
+      bar: factoryMetrics.avgUtilization,
+    },
+    {
+      color: "red",
+      icon: "bi-camera-video",
+      value: "6 / 6",
+      label: "Active Cameras",
+      sub: "All systems operational",
+    },
+  ];
+
+  const grid = document.getElementById("summary-grid");
+  grid.innerHTML = cards.map((c, i) => `
+    <div class="stat-card ${c.color}" style="animation-delay:${i * 0.08}s">
+      <div class="stat-icon"><i class="bi ${c.icon}"></i></div>
+      <div class="stat-value">${c.value}</div>
+      <div class="stat-label">${c.label}</div>
+      ${c.sub ? `<div class="stat-sub">${c.sub}</div>` : ""}
+      ${c.bar !== undefined ? `
+        <div class="util-bar-wrap">
+          <div class="util-bar-track">
+            <div class="util-bar-fill" style="width:0%; background:var(--blue);"
+              data-target="${c.bar}" id="summary-bar"></div>
+          </div>
+        </div>` : ""}
+    </div>
+  `).join("");
+
+  // Animate bar after paint
+  requestAnimationFrame(() => {
+    const bar = document.getElementById("summary-bar");
+    if (bar) setTimeout(() => bar.style.width = bar.dataset.target + "%", 100);
+  });
+}
+
+// ════════════════════════════════════════════
+//  RENDER WORKERS TABLE
+// ════════════════════════════════════════════
+
+function getStatusBadge(status) {
+  const map = {
+    working: `<span class="status-badge working"><span class="status-dot"></span>Working</span>`,
+    idle:    `<span class="status-badge idle"><span class="status-dot"></span>Idle</span>`,
+    absent:  `<span class="status-badge absent"><span class="status-dot"></span>Absent</span>`,
+  };
+  return map[status] || status;
+}
+
+function getUtilColor(pct) {
+  if (pct >= 80) return "var(--green)";
+  if (pct >= 55) return "var(--amber)";
+  return "var(--red)";
+}
+
+function renderWorkers(data) {
+  const tbody = document.getElementById("workers-tbody");
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="8">
+      <div class="empty-state"><i class="bi bi-person-slash"></i><p>No workers found</p></div>
+    </td></tr>`;
+    document.getElementById("worker-count").textContent = 0;
+    return;
+  }
+  document.getElementById("worker-count").textContent = data.length;
+  tbody.innerHTML = data.map((w, i) => {
+    const color = getUtilColor(w.utilization);
+    return `
+    <tr style="animation-delay:${i * 0.06}s">
+      <td>
+        <div class="worker-name-wrap">
+          <div class="id-chip w-color-${workers.indexOf(w) % 6}">${w.id}</div>
+          <div>
+            <div class="name-text">${w.name}</div>
+          </div>
+        </div>
+      </td>
+      <td>${getStatusBadge(w.status)}</td>
+      <td class="mono">${w.activeTime}</td>
+      <td class="mono">${w.idleTime}</td>
+      <td>
+        <div class="mini-progress">
+          <div class="mini-bar-track">
+            <div class="mini-bar-fill" data-target="${w.utilization}"
+              style="width:0%; background:${color};"></div>
+          </div>
+          <div class="mini-bar-pct">${w.utilization}%</div>
+        </div>
+      </td>
+      <td class="mono">${w.units.toLocaleString()}</td>
+      <td class="mono">${w.unitsPerHr}</td>
+      <td>
+        <button class="btn btn-sm" style="background:var(--bg-card);border:1px solid var(--border);color:var(--text-secondary);font-size:11px;"
+          onclick="openWorkerModal(${workers.indexOf(w)})">
+          Details <i class="bi bi-chevron-right"></i>
+        </button>
+      </td>
+    </tr>`;
+  }).join("");
+
+  // Animate mini bars
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      document.querySelectorAll(".mini-bar-fill").forEach(el => {
+        el.style.width = el.dataset.target + "%";
+      });
+    }, 150);
+  });
+}
+
+// ════════════════════════════════════════════
+//  RENDER STATIONS TABLE
+// ════════════════════════════════════════════
+
+const stationTypeIcon = {
+  Assembly: "bi-tools",
+  Packaging: "bi-box",
+  QA: "bi-clipboard-check",
+  Welding: "bi-fire",
+};
+
+function renderStations(data) {
+  const tbody = document.getElementById("stations-tbody");
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="7">
+      <div class="empty-state"><i class="bi bi-grid-slash"></i><p>No stations found</p></div>
+    </td></tr>`;
+    document.getElementById("station-count").textContent = 0;
+    return;
+  }
+  document.getElementById("station-count").textContent = data.length;
+  tbody.innerHTML = data.map((s, i) => {
+    const color = getUtilColor(s.utilization);
+    const icon  = stationTypeIcon[s.type] || "bi-gear";
+    return `
+    <tr style="animation-delay:${i * 0.06}s">
+      <td>
+        <div class="worker-name-wrap">
+          <div class="id-chip w-color-${i % 6}">${s.id}</div>
+          <div class="name-text">${s.name}</div>
+        </div>
+      </td>
+      <td>
+        <span style="color:var(--text-secondary); font-size:13px;">
+          <i class="bi ${icon}" style="color:var(--amber); margin-right:5px;"></i>${s.type}
+        </span>
+      </td>
+      <td class="mono">${s.occupancy}</td>
+      <td>
+        <div class="mini-progress">
+          <div class="mini-bar-track">
+            <div class="mini-bar-fill" data-target="${s.utilization}"
+              style="width:0%; background:${color};"></div>
+          </div>
+          <div class="mini-bar-pct">${s.utilization}%</div>
+        </div>
+      </td>
+      <td class="mono">${s.units.toLocaleString()}</td>
+      <td class="mono">${s.throughput} /hr</td>
+      <td>
+        <button class="btn btn-sm" style="background:var(--bg-card);border:1px solid var(--border);color:var(--text-secondary);font-size:11px;"
+          onclick="openStationModal(${i})">
+          Details <i class="bi bi-chevron-right"></i>
+        </button>
+      </td>
+    </tr>`;
+  }).join("");
+
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      document.querySelectorAll(".mini-bar-fill").forEach(el => {
+        el.style.width = el.dataset.target + "%";
+      });
+    }, 150);
+  });
+}
+
+// ════════════════════════════════════════════
+//  MODAL
+// ════════════════════════════════════════════
+
+function openWorkerModal(idx) {
+  const w = workers[idx];
+  document.getElementById("modal-header").innerHTML = `
+    <div class="worker-name-wrap">
+      <div class="id-chip w-color-${idx % 6}" style="width:36px;height:36px;font-size:13px;">${w.id}</div>
+      <div>
+        <div class="name-text" style="font-size:17px;">${w.name}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Worker Detail View</div>
+      </div>
+    </div>`;
+  document.getElementById("modal-stats").innerHTML = `
+    ${modalStat("Active Time",  w.activeTime,  "bi-clock")}
+    ${modalStat("Idle Time",    w.idleTime,    "bi-pause-circle")}
+    ${modalStat("Utilization",  w.utilization + "%", "bi-bar-chart")}
+    ${modalStat("Units Produced", w.units.toLocaleString(), "bi-box-seam")}
+    ${modalStat("Units / Hour", w.unitsPerHr,  "bi-speedometer2")}
+    ${modalStat("Status",       w.status.charAt(0).toUpperCase() + w.status.slice(1), "bi-activity")}
+  `;
+  document.getElementById("modal-overlay").classList.add("open");
+}
+
+function openStationModal(idx) {
+  const s = workstations[idx];
+  document.getElementById("modal-header").innerHTML = `
+    <div class="worker-name-wrap">
+      <div class="id-chip w-color-${idx % 6}" style="width:36px;height:36px;font-size:13px;">${s.id}</div>
+      <div>
+        <div class="name-text" style="font-size:17px;">${s.name}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${s.type} Station</div>
+      </div>
+    </div>`;
+  document.getElementById("modal-stats").innerHTML = `
+    ${modalStat("Occupancy",    s.occupancy,   "bi-clock")}
+    ${modalStat("Utilization",  s.utilization + "%", "bi-bar-chart")}
+    ${modalStat("Units Produced", s.units.toLocaleString(), "bi-box-seam")}
+    ${modalStat("Throughput/Hr", s.throughput + " units", "bi-speedometer2")}
+  `;
+  document.getElementById("modal-overlay").classList.add("open");
+}
+
+function modalStat(label, value, icon) {
+  return `
+    <div class="modal-stat">
+      <div style="color:var(--amber);font-size:13px;margin-bottom:8px;"><i class="bi ${icon}"></i> <span style="font-size:11px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;">${label}</span></div>
+      <div class="modal-stat-val">${value}</div>
+    </div>`;
+}
+
+function closeModal() {
+  document.getElementById("modal-overlay").classList.remove("open");
+}
+
+document.getElementById("modal-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ════════════════════════════════════════════
+//  FILTERING
+// ════════════════════════════════════════════
+
+document.getElementById("worker-search").addEventListener("input", applyWorkerFilters);
+document.getElementById("worker-status-filter").addEventListener("change", applyWorkerFilters);
+
+function applyWorkerFilters() {
+  const q = document.getElementById("worker-search").value.toLowerCase();
+  const status = document.getElementById("worker-status-filter").value;
+  let filtered = workers.filter(w => {
+    const matchQ = !q || w.name.toLowerCase().includes(q) || w.id.toLowerCase().includes(q);
+    const matchS = !status || w.status === status;
+    return matchQ && matchS;
+  });
+  renderWorkers(filtered);
+}
+
+document.getElementById("station-search").addEventListener("input", function() {
+  const q = this.value.toLowerCase();
+  const filtered = workstations.filter(s =>
+    !q || s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q) || s.type.toLowerCase().includes(q)
+  );
+  renderStations(filtered);
+});
+
+// ════════════════════════════════════════════
+//  CLOCK
+// ════════════════════════════════════════════
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById("clock").textContent =
+    now.toTimeString().slice(0,8);
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════
+
+renderSummary();
+renderWorkers(workers);
+renderStations(workstations);
+
+</script>
+</body>
+</html>
