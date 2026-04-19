@@ -1,73 +1,115 @@
 import { useState, useEffect } from 'react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL;
 
+// ── Frontend types (camelCase)
 interface FactoryMetrics {
-  totalProductiveTime: string;
+  totalProductiveTime:  string;
   totalProductionCount: number;
-  avgProductionRate: string;
-  avgUtilization: number;
+  avgProductionRate:    string;
+  avgUtilization:       number;
+  totalEventsIngested:  number;
+  activeCameras:        number;
+  activeWorkers:        number;
 }
 
 interface Worker {
-  id: string;
-  name: string;
-  status: 'working' | 'idle' | 'absent';
-  activeTime: string;
-  idleTime: string;
+  id:          string;
+  name:        string;
+  status:      'working' | 'idle' | 'absent';
+  activeTime:  string;
+  idleTime:    string;
   utilization: number;
-  units: number;
-  unitsPerHr: number;
+  units:       number;
+  unitsPerHr:  number;
 }
 
 interface Workstation {
-  id: string;
-  name: string;
-  type: string;
-  occupancy: string;
+  id:          string;
+  name:        string;
+  type:        string;
+  occupancy:   string;
   utilization: number;
-  units: number;
-  throughput: number;
+  units:       number;
+  throughput:  number;
 }
 
-interface MetricsData {
-  factory?: FactoryMetrics;
-  workers?: Worker[];
-  workstations?: Workstation[];
+// ── Raw API response types (snake_case)
+interface RawFactory {
+  total_productive_time:  string;
+  total_production_count: number;
+  avg_production_rate:    string;
+  avg_utilization:        number;
+  total_events_ingested:  number;
+  active_cameras:         number;
+  active_workers:         number;
 }
 
-// Mock data for development - replace with actual API calls
-const mockFactoryMetrics: FactoryMetrics = {
-  totalProductiveTime: "38h 20m",
-  totalProductionCount: 1284,
-  avgProductionRate: "33.8 units/hr",
-  avgUtilization: 76.4,
-};
+interface RawWorker {
+  worker_id:      string;
+  name:           string;
+  status:         'working' | 'idle' | 'absent';
+  active_time:    string;
+  idle_time:      string;
+  utilization:    number;
+  units_produced: number;
+  units_per_hour: number;
+}
 
-const mockWorkers: Worker[] = [
-  { id: "W1", name: "Carlos Mendez", status: "working", activeTime: "6h 45m", idleTime: "1h 15m", utilization: 84, units: 223, unitsPerHr: 33.1 },
-  { id: "W2", name: "Anika Sharma", status: "working", activeTime: "7h 10m", idleTime: "0h 50m", utilization: 89, units: 248, unitsPerHr: 34.6 },
-  { id: "W3", name: "James Okafor", status: "idle", activeTime: "5h 30m", idleTime: "2h 30m", utilization: 68, units: 187, unitsPerHr: 34.0 },
-  { id: "W4", name: "Mei-Lin Zhang", status: "working", activeTime: "6h 55m", idleTime: "1h 05m", utilization: 86, units: 231, unitsPerHr: 33.4 },
-  { id: "W5", name: "Dmitri Volkov", status: "absent", activeTime: "3h 00m", idleTime: "0h 30m", utilization: 42, units: 98, unitsPerHr: 32.7 },
-  { id: "W6", name: "Fatima Al-Nour", status: "idle", activeTime: "5h 50m", idleTime: "2h 10m", utilization: 72, units: 297, unitsPerHr: 50.9 },
-];
+interface RawWorkstation {
+  station_id:          string;
+  name:                string;
+  type:                string;
+  occupancy_time:      string;
+  utilization:         number;
+  units_produced:      number;
+  throughput_per_hour: number;
+}
 
-const mockWorkstations: Workstation[] = [
-  { id: "S1", name: "Station Alpha", type: "Assembly", occupancy: "6h 40m", utilization: 83, units: 218, throughput: 32.7 },
-  { id: "S2", name: "Station Beta", type: "Packaging", occupancy: "7h 00m", utilization: 87, units: 241, throughput: 34.4 },
-  { id: "S3", name: "Station Gamma", type: "Assembly", occupancy: "5h 20m", utilization: 66, units: 178, throughput: 33.4 },
-  { id: "S4", name: "Station Delta", type: "QA", occupancy: "6h 50m", utilization: 85, units: 226, throughput: 33.1 },
-  { id: "S5", name: "Station Epsilon", type: "Welding", occupancy: "3h 10m", utilization: 39, units: 101, throughput: 31.9 },
-  { id: "S6", name: "Station Zeta", type: "Packaging", occupancy: "5h 45m", utilization: 71, units: 320, throughput: 55.7 },
-];
+interface RawMetricsResponse {
+  factory:      RawFactory;
+  workers:      RawWorker[];
+  workstations: RawWorkstation[];
+}
+
+// ── Mappers
+const mapFactory = (f: RawFactory): FactoryMetrics => ({
+  totalProductiveTime:  f.total_productive_time,
+  totalProductionCount: f.total_production_count,
+  avgProductionRate:    f.avg_production_rate,
+  avgUtilization:       f.avg_utilization,
+  totalEventsIngested:  f.total_events_ingested,
+  activeCameras:        f.active_cameras,
+  activeWorkers:        f.active_workers,
+});
+
+const mapWorker = (w: RawWorker): Worker => ({
+  id:          w.worker_id,
+  name:        w.name,
+  status:      w.status,
+  activeTime:  w.active_time,
+  idleTime:    w.idle_time,
+  utilization: w.utilization,
+  units:       w.units_produced,
+  unitsPerHr:  w.units_per_hour,
+});
+
+const mapWorkstation = (s: RawWorkstation): Workstation => ({
+  id:          s.station_id,
+  name:        s.name,
+  type:        s.type,
+  occupancy:   s.occupancy_time,
+  utilization: s.utilization,
+  units:       s.units_produced,
+  throughput:  s.throughput_per_hour,
+});
 
 export function useMetrics() {
-  const [factoryMetrics, setFactoryMetrics] = useState<FactoryMetrics>(mockFactoryMetrics);
-  const [workers, setWorkers] = useState<Worker[]>(mockWorkers);
-  const [workstations, setWorkstations] = useState<Workstation[]>(mockWorkstations);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [factoryMetrics, setFactoryMetrics] = useState<FactoryMetrics | null>(null);
+  const [workers, setWorkers]               = useState<Worker[]>([]);
+  const [workstations, setWorkstations]     = useState<Workstation[]>([]);
+  const [loading, setLoading]               = useState(true);
+  const [error, setError]                   = useState<string | null>(null);
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -75,24 +117,21 @@ export function useMetrics() {
         setLoading(true);
         const response = await fetch(`${API_URL}/api/metrics`);
         if (!response.ok) throw new Error('Failed to fetch metrics');
-        const data: MetricsData = await response.json();
-        setFactoryMetrics(data.factory || mockFactoryMetrics);
-        setWorkers(data.workers || mockWorkers);
-        setWorkstations(data.workstations || mockWorkstations);
+
+        const data: RawMetricsResponse = await response.json();
+
+        setFactoryMetrics(mapFactory(data.factory));
+        setWorkers(data.workers.map(mapWorker));
+        setWorkstations(data.workstations.map(mapWorkstation));
         setError(null);
       } catch (err) {
-        console.warn('API unavailable, using mock data:', err instanceof Error ? err.message : err);
-        setError(null); 
-        setFactoryMetrics(mockFactoryMetrics);
-        setWorkers(mockWorkers);
-        setWorkstations(mockWorkstations);
+        setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
         setLoading(false);
       }
     };
 
     fetchMetrics();
-    // Poll every 30 seconds
     const interval = setInterval(fetchMetrics, 30000);
     return () => clearInterval(interval);
   }, []);

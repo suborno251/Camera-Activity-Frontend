@@ -72,6 +72,21 @@ function App() {
     )
   }
 
+  // ── Add this block
+  if (!factoryMetrics) {
+    return (
+      <>
+        <Topbar />
+        <div className="main-wrap">
+          <div className="empty-state">
+            <i className="bi bi-hourglass-split"></i>
+            <p>Loading metrics...</p>
+          </div>
+        </div>
+      </>
+    )
+  }
+
   return (
     <>
       <Topbar />
